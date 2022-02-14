@@ -1,4 +1,4 @@
-Evaluation code for INF-3023 Assignment 1
+Evaluation code for INF-3203 Assignment 1
 ==================================================
 Some examples:
 --------------------------------------------------
