@@ -11,9 +11,9 @@ NFAILS = 3
 NACCEPTORS = (2 * NFAILS) + 1
 NREPLICAS = NFAILS + 1
 NLEADERS = NFAILS + 1
-NREQUESTS = 4
+NREQUESTS = 1
 NCONFIGS = 1
-NCLIENTS = 10
+NCLIENTS = 1
 
 class Env:
     """
@@ -43,10 +43,8 @@ class Env:
 
     def run(self):
         initialconfig = Config([], [], [])
-        c = 0
-        c2 = 1
-
         # Create replicas
+        c = 0
         for i in range(NREPLICAS):
             pid = "replica %d" % i
             Replica(self, pid, initialconfig)
@@ -75,22 +73,11 @@ class Env:
                             thread.start()
 
 
-
-                    #pid = "client %d.%d" % (c,i)
-                    #pid2 = "client %d.%d" % (c, i)
-                    #cmd = Command(pid,0,"operation %d.%d" % (c,i))
-                    #print("Sent ", cmd, " from ", pid, " to ", r)
-                    #self.sendMessage(r, RequestMessage(pid,cmd))
-#
-                    #cmd2 = Command(pid2,0,"operation %d.%d" % (c2,i))
-                    #print("Sent ", cmd2, " from ", pid2, " to ", r)
-                    #self.sendMessage(r, RequestMessage(pid2,cmd2))
-                    #time.sleep(1)
-
         # Create new configurations. The configuration contains the
         # leaders and the acceptors (but not the replicas).
         for c in range(1, NCONFIGS):
             config = Config(initialconfig.replicas, [], [])
+            threads = []
             # Create acceptors in the new configuration
             for i in range(NACCEPTORS):
                 pid = "acceptor %d.%d" % (c,i)
@@ -116,11 +103,14 @@ class Env:
                     time.sleep(1)
             # Send client requests to replicas
             for i in range(NREQUESTS):
-                pid = "client %d.%d" % (c,i)
-                for r in config.replicas:
-                    cmd = Command(pid,0,"operation %d.%d"%(c,i))
-                    self.sendMessage(r, RequestMessage(pid, cmd))
-                    time.sleep(1)
+                for c in range(NCLIENTS):
+                    for r in config.replicas:
+                        t = threading.Thread(target=self.sendClientRequest, args=[i,c,r])
+                        threads.append(t)
+                        for thread in threads:
+                            if not thread.is_alive():
+                                thread.start()
+
 
     def terminate_handler(self, signal, frame):
         self._graceexit()
