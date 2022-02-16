@@ -2,6 +2,7 @@ from process import Process
 from message import ProposeMessage,DecisionMessage,RequestMessage
 from utils import *
 import time
+import json
 
 class Replica(Process):
     def __init__(self, env, id, config):
@@ -89,6 +90,11 @@ class Replica(Process):
         print("Here I am: ", self.id)
         while True:
             msg = self.getNextMessage()
+            file = "replica_" + str(self.id)
+            txt = msg.command[2] + ": " + str(time.time()) + "\n"
+            print(txt)
+            with open(file, "a") as f:
+                f.write(txt)
             if isinstance(msg, RequestMessage):
                 self.requests.append(msg.command)
             elif isinstance(msg, DecisionMessage):
