@@ -1,4 +1,4 @@
-import os, signal, sys, time
+import os, signal, sys, time, threading
 from acceptor import Acceptor
 from leader import Leader
 from message import RequestMessage
@@ -7,12 +7,13 @@ from replica import Replica
 from utils import *
 
 # Values are assigned from table 1 in the Paxos Made Moderatly Complex paper.
-NFAILS = 1
+NFAILS = 3
 NACCEPTORS = (2 * NFAILS) + 1
 NREPLICAS = NFAILS + 1
 NLEADERS = NFAILS + 1
-NREQUESTS = 40
-NCONFIGS = 3
+NREQUESTS = 4
+NCONFIGS = 1
+NCLIENTS = 10
 
 class Env:
     """
@@ -33,9 +34,17 @@ class Env:
     def removeProc(self, pid):
         del self.procs[pid]
 
+    def sendClientRequest(self, i, c, r):
+        pid = "client %d.%d" % (c,i)
+        cmd = Command(pid, 0, "operation %d.%d" % (c, i))
+        self.sendMessage(r, RequestMessage(pid,cmd))
+        print("Sent",cmd, "from", pid, "to", r)
+        time.sleep(1)
+
     def run(self):
         initialconfig = Config([], [], [])
         c = 0
+        c2 = 1
 
         # Create replicas
         for i in range(NREPLICAS):
@@ -53,12 +62,30 @@ class Env:
             Leader(self, pid, initialconfig)
             initialconfig.leaders.append(pid)
         # Send client requests to replicas
+        # ToDo:
+            # Multiple clients sending simultaneous requests.
+        threads = []
         for i in range(NREQUESTS):
-            pid = "client %d.%d" % (c,i)
-            for r in initialconfig.replicas:
-                cmd = Command(pid,0,"operation %d.%d" % (c,i))
-                self.sendMessage(r, RequestMessage(pid,cmd))
-                time.sleep(1)
+            for c in range(NCLIENTS):
+                for r in initialconfig.replicas:
+                    t = threading.Thread(target=self.sendClientRequest, args=[i,c,r])
+                    threads.append(t)
+                    for thread in threads:
+                        if not thread.is_alive():
+                            thread.start()
+
+
+
+                    #pid = "client %d.%d" % (c,i)
+                    #pid2 = "client %d.%d" % (c, i)
+                    #cmd = Command(pid,0,"operation %d.%d" % (c,i))
+                    #print("Sent ", cmd, " from ", pid, " to ", r)
+                    #self.sendMessage(r, RequestMessage(pid,cmd))
+#
+                    #cmd2 = Command(pid2,0,"operation %d.%d" % (c2,i))
+                    #print("Sent ", cmd2, " from ", pid2, " to ", r)
+                    #self.sendMessage(r, RequestMessage(pid2,cmd2))
+                    #time.sleep(1)
 
         # Create new configurations. The configuration contains the
         # leaders and the acceptors (but not the replicas).
