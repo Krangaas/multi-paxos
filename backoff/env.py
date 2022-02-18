@@ -11,9 +11,9 @@ NFAILS = 3
 NACCEPTORS = (2 * NFAILS) + 1
 NREPLICAS = NFAILS + 1
 NLEADERS = NFAILS + 1
-NREQUESTS = 1
+NREQUESTS = 10
 NCONFIGS = 1
-NCLIENTS = 1
+NCLIENTS = 3
 
 class Env:
     """
@@ -39,7 +39,7 @@ class Env:
         cmd = Command(pid, 0, "operation %d.%d" % (c, i))
         self.sendMessage(r, RequestMessage(pid,cmd))
         print("Sent",cmd, "from", pid, "to", r)
-        time.sleep(1)
+        #time.sleep(1)
 
     def run(self):
         initialconfig = Config([], [], [])
@@ -71,6 +71,8 @@ class Env:
                     for thread in threads:
                         if not thread.is_alive():
                             thread.start()
+                            time.sleep(1)
+                    threads.remove(thread)
 
 
         # Create new configurations. The configuration contains the
@@ -110,6 +112,8 @@ class Env:
                         for thread in threads:
                             if not thread.is_alive():
                                 thread.start()
+                                time.sleep(1)
+                        threads.remove(thread)
 
 
     def terminate_handler(self, signal, frame):
