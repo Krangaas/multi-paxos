@@ -5,14 +5,15 @@ from message import RequestMessage
 from process import Process
 from replica import Replica
 from utils import *
+import argparse
 
 # Values are assigned from table 1 in the Paxos Made Moderatly Complex paper.
-NFAILS = 1
-NACCEPTORS = (2 * NFAILS) + 1
-NREPLICAS = NFAILS + 1
-NLEADERS = NFAILS + 1
-NREQUESTS = 40
-NCONFIGS = 3
+NFAILS = None
+NACCEPTORS = None
+NREPLICAS = None
+NLEADERS = None
+NREQUESTS = None
+NCONFIGS = None
 
 class Env:
     """
@@ -103,13 +104,46 @@ class Env:
         sys.stderr.flush()
         os._exit(exitcode)
 
-def main():
+def main(args):
+    global NACCEPTORS
+    global NREPLICAS
+    global NLEADERS
+    global NCONFIGS
+    global NREQUESTS
+    global NFAILS
+    NFAILS = args.fails
+    NREQUESTS = args.requests
+    NCONFIGS = args.configs
+    NACCEPTORS = (2 * NFAILS) + 1
+    NREPLICAS = NFAILS + 1
+    NLEADERS = NFAILS + 1
     e = Env()
     e.run()
     signal.signal(signal.SIGINT, e.terminate_handler)
     signal.signal(signal.SIGTERM, e.terminate_handler)
     signal.pause()
 
+def parse_args():
+    """ optarg parser """
+    DIE_AFTER_SECONDS_DEFAULT = 10 * 60
+    p = argparse.ArgumentParser()
+    p.add_argument("-R", "--roles", required=False, type=list, default=[2,2,3],
+        help = "Default: 223 | Configuration of roles. " +
+               "Valid input is: [NREPLICAS][NLEADERS][NACCEPTORS]")
+    p.add_argument("-t", "--test", required=False, type=str, default=None,
+        help = "Default: None | Specify which test to run. " +
+               "Valid inputs are: (throughput | ...)")
+    p.add_argument("-r", "--requests", required=False, type=int, default=40,
+        help = "Default: 40 | Number of requests to send.")
+    p.add_argument("-f", "--fails", required=False, type=int, default=1,
+        help = "Default: 1 | Number of acceptable fails.")
+    p.add_argument("-c", "--configs", required=False, type=int, default=3,
+        help = "Default: 1 | Number of role configurations to try.")
+    p.add_argument("-C", "--clients", required=False, type=int, default=1,
+        help = "Default: 1 | Number of clients.")
+    args = p.parse_args()
+    return args
 
 if __name__=='__main__':
-    main()
+    args = parse_args()
+    main(args)
