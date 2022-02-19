@@ -1,5 +1,5 @@
 from process import Process
-from message import ProposeMessage,DecisionMessage,RequestMessage
+from message import ProposeMessage,DecisionMessage,RequestMessage,DoneMessage
 from utils import *
 import time
 import json
@@ -13,6 +13,11 @@ class Replica(Process):
         self.requests = []
         self.config = config
         self.env.addProc(self)
+
+        self.times = {}
+        self.decs_made = 0
+        self.total_reqs = -1
+        self.written = False
 
     def propose(self):
         """
@@ -57,6 +62,8 @@ class Replica(Process):
         requested operation to the application state. In either case,
         the function increments slot out.
         """
+        t2 = time.time()
+        self.record_decision_time(t2, cmd)
         for s in range(1, self.slot_out):
             if self.decisions[s] == cmd:
                 self.slot_out += 1
@@ -65,6 +72,7 @@ class Replica(Process):
             self.slot_out += 1
             return
         print(self.id, ": perform", self.slot_out, ":", cmd)
+        self.decs_made += 1
         self.slot_out += 1
 
     def body(self):
@@ -90,11 +98,8 @@ class Replica(Process):
         print("Here I am: ", self.id)
         while True:
             msg = self.getNextMessage()
-            file = "replica_" + str(self.id)
-            txt = msg.command[2] + ": " + str(time.time()) + "\n"
-            with open(file, "a") as f:
-                f.write(txt)
             if isinstance(msg, RequestMessage):
+                self.record_msg(msg)
                 self.requests.append(msg.command)
             elif isinstance(msg, DecisionMessage):
                 self.decisions[msg.slot_number] = msg.command
@@ -104,6 +109,46 @@ class Replica(Process):
                             self.requests.append(self.proposals[self.slot_out])
                         del self.proposals[self.slot_out]
                     self.perform(self.decisions[self.slot_out])
+            elif isinstance(msg, DoneMessage):
+                self.total_reqs = int(msg.command[2])
             else:
                 print("Replica: unknown msg type")
+
             self.propose()
+            if self.decs_made == self.total_reqs and not self.written:
+                self.write_times()
+                self.written =  True
+
+    def record_msg(self,msg):
+        """ Record message recieved time """
+        if isinstance(msg.command, ReconfigCommand):
+            return
+
+        key = msg.command[2]
+        if isinstance(msg, RequestMessage):
+            if "client" in msg.src:
+                if key not in self.times:
+                    self.times[key] = [float(msg.time), False]
+                else:
+                    self.times[key][0] = float(msg.time)
+
+
+    def record_decision_time(self, time, cmd):
+        if not isinstance(cmd, ReconfigCommand):
+            key = cmd[2]
+            if key not in self.times:
+                self.times[key] = [False, time]
+            else:
+                self.times[key][1] = time
+
+
+    def write_times(self):
+        print("Replica", str(self.id), "writing to file")
+        file = "replica_" + str(self.id)
+        with open(file, "a") as f:
+            f.write("_______\n")
+            for key in self.times:
+                diff = float(self.times[key][1]) - float(self.times[key][0])
+                txt = str(key) + ": " + str(diff) + "\n"
+                f.write(txt)
+        self.times = {}

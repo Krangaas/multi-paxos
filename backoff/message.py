@@ -83,9 +83,10 @@ class RequestMessage(Message):
     Sent by Clients to Replicas.
     Carries a command.
     """
-    def __init__(self, src, command):
+    def __init__(self, src, command, time):
         Message.__init__(self, src)
         self.command = command
+        self.time = time
 
 class ProposeMessage(Message):
     """
@@ -95,4 +96,13 @@ class ProposeMessage(Message):
     def __init__(self, src, slot_number, command):
         Message.__init__(self, src)
         self.slot_number = slot_number
+        self.command = command
+
+class DoneMessage(Message):
+    """
+    Sent by Clients to Replicas.
+    Carries a done command.
+    """
+    def __init__(self, src, command):
+        Message.__init__(self, src)
         self.command = command
