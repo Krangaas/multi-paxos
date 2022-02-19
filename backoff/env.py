@@ -1,13 +1,13 @@
 import os, signal, sys, time, threading
 from acceptor import Acceptor
 from leader import Leader
-from message import RequestMessage
+from message import RequestMessage, DoneMessage
 from process import Process
 from replica import Replica
 from utils import *
 
 # Values are assigned from table 1 in the Paxos Made Moderatly Complex paper.
-NFAILS = 3
+NFAILS = 2
 NACCEPTORS = (2 * NFAILS) + 1
 NREPLICAS = NFAILS + 1
 NLEADERS = NFAILS + 1
@@ -37,7 +37,7 @@ class Env:
     def sendClientRequest(self, i, c, r):
         pid = "client %d.%d" % (c,i)
         cmd = Command(pid, 0, "operation %d.%d" % (c, i))
-        self.sendMessage(r, RequestMessage(pid,cmd))
+        self.sendMessage(r, RequestMessage(pid,cmd, str(time.time())))
         print("Sent",cmd, "from", pid, "to", r)
         #time.sleep(1)
 
@@ -74,7 +74,11 @@ class Env:
                             time.sleep(1)
                     threads.remove(thread)
 
-
+        for r in initialconfig.replicas:
+            pid = "master"
+            cmd = Command(pid, 0, str(NREQUESTS*NCLIENTS))
+            self.sendMessage(r, DoneMessage(pid,cmd))
+            print("Sent",cmd, "from", pid, "to", r)
         # Create new configurations. The configuration contains the
         # leaders and the acceptors (but not the replicas).
         for c in range(1, NCONFIGS):
