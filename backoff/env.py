@@ -5,23 +5,21 @@ from message import RequestMessage, DoneMessage
 from process import Process
 from replica import Replica
 from utils import *
-
-# Values are assigned from table 1 in the Paxos Made Moderatly Complex paper.
-NFAILS = 2
-NACCEPTORS = (2 * NFAILS) + 1
-NREPLICAS = NFAILS + 1
-NLEADERS = NFAILS + 1
-NREQUESTS = 10
-NCONFIGS = 1
-NCLIENTS = 3
+import argparse
 
 class Env:
     """
     This is the main code in which all processes are created and run. This
     code also simulates a set of clients submitting requests.
     """
-    def __init__(self):
+    def __init__(self, requests, config, timeout, clients):
         self.procs = {}
+        self.NREQUESTS = int(requests)
+        self.NACCEPTORS = int(config["acceptors"])
+        self.NREPLICAS = int(config["replicas"])
+        self.NLEADERS = int(config["leaders"])
+        self.timeout = float(timeout)
+        self.NCLIENTS = int(clients)
 
     def sendMessage(self, dst, msg):
         if dst in self.procs:
@@ -39,85 +37,43 @@ class Env:
         cmd = Command(pid, 0, "operation %d.%d" % (c, i))
         self.sendMessage(r, RequestMessage(pid,cmd, str(time.time())))
         print("Sent",cmd, "from", pid, "to", r)
-        #time.sleep(1)
 
     def run(self):
         initialconfig = Config([], [], [])
         # Create replicas
         c = 0
-        for i in range(NREPLICAS):
+        for i in range(self.NREPLICAS):
             pid = "replica %d" % i
             Replica(self, pid, initialconfig)
             initialconfig.replicas.append(pid)
         # Create acceptors (initial configuration)
-        for i in range(NACCEPTORS):
+        for i in range(self.NACCEPTORS):
             pid = "acceptor %d.%d" % (c,i)
             Acceptor(self, pid)
             initialconfig.acceptors.append(pid)
         # Create leaders (initial configuration)
-        for i in range(NLEADERS):
+        for i in range(self.NLEADERS):
             pid = "leader %d.%d" % (c,i)
             Leader(self, pid, initialconfig)
             initialconfig.leaders.append(pid)
         # Send client requests to replicas
-        # ToDo:
-            # Multiple clients sending simultaneous requests.
         threads = []
-        for i in range(NREQUESTS):
-            for c in range(NCLIENTS):
+        for i in range(self.NREQUESTS):
+            for c in range(self.NCLIENTS):
                 for r in initialconfig.replicas:
                     t = threading.Thread(target=self.sendClientRequest, args=[i,c,r])
                     threads.append(t)
                     for thread in threads:
                         if not thread.is_alive():
                             thread.start()
-                            time.sleep(1)
+                            time.sleep(self.timeout)
                     threads.remove(thread)
 
         for r in initialconfig.replicas:
             pid = "master"
-            cmd = Command(pid, 0, str(NREQUESTS*NCLIENTS))
+            cmd = Command(pid, 0, str(self.NREQUESTS*self.NCLIENTS))
             self.sendMessage(r, DoneMessage(pid,cmd))
             print("Sent",cmd, "from", pid, "to", r)
-        # Create new configurations. The configuration contains the
-        # leaders and the acceptors (but not the replicas).
-        for c in range(1, NCONFIGS):
-            config = Config(initialconfig.replicas, [], [])
-            threads = []
-            # Create acceptors in the new configuration
-            for i in range(NACCEPTORS):
-                pid = "acceptor %d.%d" % (c,i)
-                Acceptor(self, pid)
-                config.acceptors.append(pid)
-            # Create leaders in the new configuration
-            for i in range(NLEADERS):
-                pid = "leader %d.%d" % (c,i)
-                Leader(self, pid, config)
-                config.leaders.append(pid)
-            # Send reconfiguration request
-            for r in config.replicas:
-                pid = "master %d.%d" % (c,i)
-                cmd = ReconfigCommand(pid,0,str(config))
-                self.sendMessage(r, RequestMessage(pid, cmd))
-                time.sleep(1)
-            # Send WINDOW noops to speed up reconfiguration
-            for i in range(WINDOW-1):
-                pid = "master %d.%d" % (c,i)
-                for r in config.replicas:
-                    cmd = Command(pid,0,"operation noop")
-                    self.sendMessage(r, RequestMessage(pid, cmd))
-                    time.sleep(1)
-            # Send client requests to replicas
-            for i in range(NREQUESTS):
-                for c in range(NCLIENTS):
-                    for r in config.replicas:
-                        t = threading.Thread(target=self.sendClientRequest, args=[i,c,r])
-                        threads.append(t)
-                        for thread in threads:
-                            if not thread.is_alive():
-                                thread.start()
-                                time.sleep(1)
-                        threads.remove(thread)
 
 
     def terminate_handler(self, signal, frame):
@@ -128,13 +84,39 @@ class Env:
         sys.stderr.flush()
         os._exit(exitcode)
 
-def main():
-    e = Env()
+def parse_args():
+    """ optarg parser """
+    p = argparse.ArgumentParser()
+    p.add_argument("-r", "--requests", required=True, type=int,
+        help = "Number of requests to send per client.")
+    p.add_argument("-C", "--config", required=True, type=str,
+        help="Specify configuration of multi-paxos system.")
+    p.add_argument("-T", "--timeout", required=True, type=float,
+        help="Timeout length before a client sends the next request.")
+    p.add_argument("-c", "--clients", required=True, type=int,
+        help="Number of connecting clients.")
+
+    return p.parse_args()
+
+def main(args):
+
+    c = []
+    for val in args.config:
+        if val.isdigit():
+            c.append(val)
+
+    args.config = {
+        "replicas": c[0],
+        "leaders": c[1],
+        "acceptors": c[2]
+    }
+
+    e = Env(args.requests, args.config, args.timeout, args.clients)
     e.run()
     signal.signal(signal.SIGINT, e.terminate_handler)
     signal.signal(signal.SIGTERM, e.terminate_handler)
     signal.pause()
 
-
 if __name__=='__main__':
-    main()
+    args = parse_args()
+    main(args)
