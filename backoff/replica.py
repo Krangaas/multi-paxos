@@ -144,7 +144,7 @@ class Replica(Process):
 
     def write_times(self):
         print("Replica", str(self.id), "writing to file")
-        file = "replica_" + str(self.id)
+        file = "thr_" + str(self.id).replace(" ","_")
         with open(file, "a") as f:
             f.write("_______\n")
             for key in self.times:
