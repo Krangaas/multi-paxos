@@ -55,6 +55,7 @@ class TestRunner:
 
     def __simple_test__(self):
         os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+        os.system("python3 confirm_consensus.py " + str(self.cfg_dict["replicas"]))
 
     def clean_data_files(self):
         for r in range(self.cfg_dict["replicas"]):
