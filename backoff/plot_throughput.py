@@ -8,14 +8,18 @@ plt.rcParams['axes.linewidth'] = 0.1
 
 def parse_data(n):
     """ Parse data stored in replica files """
-    data = []
-    for i in range(int(n)):
+    val_store = {}
+    for i in range(0, int(n)):
         with open("thr_replica_"+str(i), mode='r') as f:
-            next(f) # skip header
             for line in f:
-                value = line.rstrip('\n').split(': ')[1]
-                data.append(float(value))
-    return data
+                if line.startswith('clients'):
+                    clients = line.split('|')[0]
+                    if i == 0:
+                        val_store[clients] = []
+                else:
+                    value = line.rstrip('\n').split(': ')[1]
+                    val_store[clients].append(float(value))
+    return val_store
 
 
 def create_plot(labels, avgs, stds, title):
@@ -38,19 +42,26 @@ def main():
     try:
         n = sys.argv[1]
     except:
-        print("Please specify number of replicas")
+        print("Please specify number of replicas. Example: Python3 plotthroughput.py 5")
         exit(0)
     data = parse_data(n)
+
     label = []
     avgs = []
     stds = []
-
-    label = n
     title = "Throughtput as a function of N clients"
-    avgs = np.mean(data)
-    stds = np.std(data)
-    create_plot(label, avgs, stds, title)
 
+    for clients in data.keys():
+        label.append(clients)
+
+    for d in data:
+        av = np.mean(data[d])
+        avgs.append(av)
+
+        std = np.std(data[d])
+        stds.append(std)
+
+    create_plot(label, avgs, stds, title)
 
 if __name__ == "__main__":
     main()
