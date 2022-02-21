@@ -14,12 +14,12 @@ class Env:
     """
     def __init__(self, requests, config, timeout, clients):
         self.procs = {}
-        self.NREQUESTS = int(requests)
         self.NACCEPTORS = int(config["acceptors"])
         self.NREPLICAS = int(config["replicas"])
         self.NLEADERS = int(config["leaders"])
         self.timeout = float(timeout)
         self.NCLIENTS = int(clients)
+        self.NREQUESTS = int(requests/self.NCLIENTS)
 
     def sendMessage(self, dst, msg):
         if dst in self.procs:

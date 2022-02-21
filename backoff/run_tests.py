@@ -51,7 +51,7 @@ class TestRunner:
         for n in range(self.runs):
             os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
             self.cli = str(int(self.cli)+5)
-        os.system("python3 plot_throughput.py" + str(self.cfg_dict["replicas"]))
+        os.system("python3 plot_throughput.py " + str(self.cfg_dict["replicas"]))
 
     def __simple_test__(self):
         os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
@@ -85,8 +85,8 @@ def parse_args():
     p.add_argument("-c", "--clients", required=False, type=int, default=3,
         help="Default: 3 \nNumber of connecting clients.")
 
-    p.add_argument("-r", "--requests", required=False, type=int, default=10,
-        help="Default: 40 \nNumber of requests to send per client.")
+    p.add_argument("-r", "--requests", required=False, type=int, default=100,
+        help="Default: 100 \nTotal requests to send.")
 
     p.add_argument("-T", "--timeout", required=False, type=float, default=1.0,
         help="Default: 1.0 \nTimeout length before a client sends the next request.")
