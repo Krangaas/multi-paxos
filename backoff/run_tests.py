@@ -91,7 +91,7 @@ def parse_args():
     p.add_argument("-T", "--timeout", required=False, type=float, default=1.0,
         help="Default: 1.0 \nTimeout length before a client sends the next request.")
 
-    p.add_argument("-n", "--n_runs", required=False, type=int, default=1,
+    p.add_argument("-n", "--n_runs", required=False, type=int, default=3,
         help="Default: 1\nNumber of tests to run.")
 
     p.add_argument("-D", "--debug", required=False, type=bool, default=False,

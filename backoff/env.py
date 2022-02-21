@@ -75,11 +75,21 @@ class Env:
             self.sendMessage(r, DoneMessage(pid,cmd))
             print("Sent",cmd, "from", pid, "to", r)
 
+        done = 0
+        keylist = [i for i in self.procs.keys() if i.startswith("replica")]
+        while done < self.NREPLICAS:
+            for key in keylist:
+                if self.procs[key].written:
+                    done += 1
+            time.sleep(10)
+
+        self._graceexit()
 
     def terminate_handler(self, signal, frame):
         self._graceexit()
 
     def _graceexit(self, exitcode=0):
+        print("\nExiting multi-paxos gracefully...\n")
         sys.stdout.flush()
         sys.stderr.flush()
         os._exit(exitcode)
