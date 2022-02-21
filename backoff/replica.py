@@ -18,6 +18,7 @@ class Replica(Process):
         self.decs_made = 0
         self.total_reqs = -1
         self.written = False
+        self.n_clients = 0
 
     def propose(self):
         """
@@ -111,6 +112,7 @@ class Replica(Process):
                     self.perform(self.decisions[self.slot_out])
             elif isinstance(msg, DoneMessage):
                 self.total_reqs = int(msg.command[2])
+                self.n_clients = int(msg.command[1])
             else:
                 print("Replica: unknown msg type")
 
@@ -145,8 +147,10 @@ class Replica(Process):
     def write_times(self):
         print("Replica", str(self.id), "writing to file")
         file = "thr_" + str(self.id).replace(" ","_")
+        run_config = "clients:" + str(self.n_clients) + "|requests:" + str(self.total_reqs) + "\n"
         with open(file, "a") as f:
-            f.write("_______\n")
+            f.write(run_config)
+            #f.write("_______")
             for key in self.times:
                 diff = float(self.times[key][1]) - float(self.times[key][0])
                 txt = str(key) + ": " + str(diff) + "\n"

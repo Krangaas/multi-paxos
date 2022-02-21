@@ -71,7 +71,7 @@ class Env:
 
         for r in initialconfig.replicas:
             pid = "master"
-            cmd = Command(pid, 0, str(self.NREQUESTS*self.NCLIENTS))
+            cmd = Command(pid, self.NCLIENTS, str(self.NREQUESTS*self.NCLIENTS))
             self.sendMessage(r, DoneMessage(pid,cmd))
             print("Sent",cmd, "from", pid, "to", r)
 
