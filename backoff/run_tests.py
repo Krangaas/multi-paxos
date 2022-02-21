@@ -9,36 +9,33 @@ import argparse
 class TestRunner:
     "Runs tests"
     def __init__(self, test, config, fails,
-                 clients, requests, timeout, n_runs):
-        self.test = test
-        #c = []
-        #for val in config:
-        #    if val.isdigit():
-        #        c.append(val)
-        #self.config = {
-        #    "replicas": c[0],
-        #    "leaders": c[1],
-        #    "acceptors": c[2]
-        #}
-        self.config = str(config)
-        self.clients = str(clients)
-        self.requests = str(requests)
+                 clients, requests, timeout, n_runs, debug):
+        self.cfg = str(config)
+        self.cli = str(clients)
+        self.req = str(requests)
         self.tout = str(timeout)
-        self.n_runs = str(n_runs)
+        self.runs = n_runs
 
         if fails:
             fails = int(fails)
             r = str(fails + 1)
             l = str(fails + 1)
             a = str((2 * fails) + 1)
-            self.config = r+l+a
+            self.cfg = r+l+a
+
+        if debug:
+            print("Test:", test, "("+str(self.runs)+" run(s))")
+            print("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+            exit(0)
+
+        self.clean_data_files()
 
         if test == "thr_per_replica":
             self.__thr_per_replica__()
         elif test == "thr_n_clients":
             self.__thr_n_clients__()
-        elif test == "simple_run":
-            self.__simple_run__()
+        elif test == "simple_test":
+            self.__simple_test__()
         else:
             print("No such test:", test)
 
@@ -46,12 +43,17 @@ class TestRunner:
         print("YO")
 
     def __thr_n_clients__(self):
-        print(self.replicas)
+        for n in range(self.runs):
+            #print("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+            os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+            self.cli = str(int(self.cli)+5)
 
-    def __simple_run__(self):
-        print("simple_run with config", str(self.config), " timeout:", self.tout)
-        print("python3 env.py" + " -r" + self.requests + " -C" + self.config + " -T" + self.tout + " -c" + self.clients)
-        os.system("python3 env.py" + " -r" + self.requests + " -C" + self.config + " -T" + self.tout + " -c" + self.clients)
+    def __simple_test__(self):
+        os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+
+
+    def clean_data_files(self):
+        pass
 
 
 def parse_args():
@@ -59,9 +61,9 @@ def parse_args():
                                      description="Measure throughput",
                                      formatter_class=RawTextHelpFormatter)
 
-    p.add_argument("-t", "--test", required=False, type=str, default="simple_run",
+    p.add_argument("-t", "--test", required=False, type=str, default="simple_test",
         help="\nDefault: 'simple_run' \nSpecify which test to run. Valid inputs are:" +
-             "\n   'simple_run'" +
+             "\n   'simple_test'" +
              "\n   'thr_per_replica'" +
              "\n   'thr_n_clients'")
 
@@ -75,7 +77,7 @@ def parse_args():
     p.add_argument("-c", "--clients", required=False, type=int, default=3,
         help="Default: 3 \nNumber of connecting clients.")
 
-    p.add_argument("-r", "--requests", required=False, type=int, default=40,
+    p.add_argument("-r", "--requests", required=False, type=int, default=10,
         help="Default: 40 \nNumber of requests to send per client.")
 
     p.add_argument("-T", "--timeout", required=False, type=float, default=1.0,
@@ -84,8 +86,11 @@ def parse_args():
     p.add_argument("-n", "--n_runs", required=False, type=int, default=1,
         help="Default: 1\nNumber of tests to run.")
 
+    p.add_argument("-D", "--debug", required=False, type=bool, default=False,
+        help="Default: False \nPrint output commands and exit.")
+
     return p.parse_args()
 
 if __name__=='__main__':
     args = parse_args()
-    TestRunner(args.test, args.config, args.fails, args.clients, args.requests, args.timeout, args.n_runs)
+    TestRunner(args.test, args.config, args.fails, args.clients, args.requests, args.timeout, args.n_runs, args.debug)
