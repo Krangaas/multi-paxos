@@ -100,16 +100,7 @@ def parse_args():
 
 def main(args):
 
-    c = []
-    for val in args.config:
-        if val.isdigit():
-            c.append(val)
-
-    args.config = {
-        "replicas": c[0],
-        "leaders": c[1],
-        "acceptors": c[2]
-    }
+    args.config = parse_config(args.config)
 
     e = Env(args.requests, args.config, args.timeout, args.clients)
     e.run()

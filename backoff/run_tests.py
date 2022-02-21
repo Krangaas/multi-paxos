@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import numpy as np
+import re
 import sys
 import os
 from argparse import RawTextHelpFormatter
 import argparse
+from utils import parse_config
 
 
 class TestRunner:
@@ -23,8 +25,10 @@ class TestRunner:
             a = str((2 * fails) + 1)
             self.cfg = r+l+a
 
+        self.cfg_dict = parse_config(self.cfg)
+
         if debug:
-            print("Test:", test, "("+str(self.runs)+" run(s))")
+            print("Test:", test, "(" + str(self.runs) + " run(s))")
             print("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
             exit(0)
 
@@ -40,20 +44,23 @@ class TestRunner:
             print("No such test:", test)
 
     def __thr_per_replica__(self):
-        print("YO")
+        os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
+        os.system("python3 plot_throughput.py" + str(self.cfg_dict["replicas"]))
 
     def __thr_n_clients__(self):
         for n in range(self.runs):
-            #print("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
             os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
             self.cli = str(int(self.cli)+5)
+        os.system("python3 plot_throughput.py" + str(self.cfg_dict["replicas"]))
 
     def __simple_test__(self):
         os.system("python3 env.py " + "-r" + self.req + " -C" + self.cfg + " -T" + self.tout + " -c" + self.cli)
 
-
     def clean_data_files(self):
-        pass
+        for r in range(self.cfg_dict["replicas"]):
+            file = "thr_replica_" + str(r)
+            with open(file, "w") as f:
+                f.write("")
 
 
 def parse_args():
@@ -63,9 +70,9 @@ def parse_args():
 
     p.add_argument("-t", "--test", required=False, type=str, default="simple_test",
         help="\nDefault: 'simple_run' \nSpecify which test to run. Valid inputs are:" +
-             "\n   'simple_test'" +
-             "\n   'thr_per_replica'" +
-             "\n   'thr_n_clients'")
+             "\n     'simple_test': Start a single run and confirm consensus between replicas." +
+             "\n 'thr_per_replica': Start a single run and plot throughput per replica." +
+             "\n   'thr_n_clients': Start multiple runs with increasing number of clients and plot throughput per run.")
 
     p.add_argument("-C", "--config", required=False, type=str, default="223",
         help="Default: 223 [REPLICAS|LEADERS|ACCEPTORS] \nSpecify configuration of multi-paxos system.")
