@@ -59,3 +59,15 @@ class Config(namedtuple('Config',['replicas','acceptors','leaders'])):
                              ','.join(self.acceptors),
                              ','.join(self.leaders))
 
+
+def parse_config(cfg):
+    c = []
+    for val in cfg:
+        if val.isdigit():
+            c.append(val)
+
+    return {
+        "replicas": int(c[0]),
+        "leaders": int(c[1]),
+        "acceptors": int(c[2])
+    }
