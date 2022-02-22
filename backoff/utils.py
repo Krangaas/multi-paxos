@@ -63,7 +63,7 @@ class Config(namedtuple('Config',['replicas','acceptors','leaders'])):
 def parse_config(cfg):
     """ Parses configuration string. Return dictionary. """
     c = []
-    for val in cfg:
+    for val in cfg.split(","):
         if val.isdigit():
             c.append(val)
 
@@ -75,4 +75,7 @@ def parse_config(cfg):
 
 def create_config(r,l,a):
     """ Create a config string from input. Return string. """
-    return (str(r)+str(l)+str(a))
+    r = str(r)+","
+    l = str(l)+","
+    a = str(a)
+    return r+l+a

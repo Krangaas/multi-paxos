@@ -33,7 +33,7 @@ def create_plot(labels, avgs, stds, title):
                  marker='.',
                  capsize=5)
     plt.title(title)
-    plt.ylabel("Throughput (secs)")
+    plt.ylabel("Average processing time")
     plt.xlabel("Number of clients")
     plt.show()
 

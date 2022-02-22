@@ -21,8 +21,8 @@ class TestRunner:
 
         if fails:
             fails = int(fails)
-            r = str(fails + 1)
-            l = str(fails + 1)
+            r = str(fails + 1)+","
+            l = str(fails + 1)+","
             a = str((2 * fails) + 1)
             self.cfg = r+l+a
 
@@ -42,7 +42,8 @@ class TestRunner:
         elif test == "clients":
             self._thr_inc_clients_()
         elif test == "replicas":
-            self._thr_inc_replicas_()
+            print("Not properly implemented yet...")
+            #self._thr_inc_replicas_()
         elif test == "leaders":
             self._thr_inc_leaders_()
         elif test == "acceptors":
@@ -69,7 +70,7 @@ class TestRunner:
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
             self.cli = str(int(self.cli)+self.i)
 
-        title = "'Throughput as as function of clients\n(timeout %s secs, config %s)'" % (self.tout, self.cfg)
+        title = "'Throughput as as function of clients\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
         print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
         os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
 
@@ -86,23 +87,33 @@ class TestRunner:
 
     def _thr_inc_leaders_(self):
         """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of leaders. """
+        start = parse_config(self.cfg)['leaders']
         for n in range(self.runs):
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"], d["leaders"]+self.i, d["acceptors"])
             print("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
 
-        os.system("python3 plot_throughput.py %s" % (str(self.cfg_dict["replicas"])))
+        d = parse_config(self.cfg)
+        d['leaders'] = "X"
+        self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"])
+        title = "'Throughput as as function of leaders\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
+        os.system("python3 plot_data.py %s %s %s %d %d" % (self.cfg_dict["replicas"], title, "'number of leaders'", start, self.i))
 
 
     def _thr_inc_acceptors_(self):
         """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of acceptors. """
+        start = parse_config(self.cfg)["acceptors"]
         for n in range(self.runs):
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"]+self.i)
 
-        os.system("python3 plot_acceptors.py %s" % (str(self.cfg_dict["replicas"])))
+        d = parse_config(self.cfg)
+        d["acceptors"] = "X"
+        self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"])
+        title = "'Throughput as as function of acceptors\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
+        os.system("python3 plot_data.py %s %s %s %d %d" % (self.cfg_dict["replicas"], title, "'number of acceptors'", start, self.i))
 
 
     def clean_data_files(self):
@@ -127,8 +138,8 @@ def parse_args():
              "\n         'leaders': Increment number of leaders per run and plot throughput" +
              "\n       'acceptors': Increment number of acceptors per run and plot throughput")
 
-    p.add_argument("-C", "--config", required=False, type=str, default="223",
-        help="Default: 223 [REPLICAS|LEADERS|ACCEPTORS] \nSpecify configuration of multi-paxos system.")
+    p.add_argument("-C", "--config", required=False, type=str, default="2,2,3",
+        help="Default: 2,2,3 (REPLICAS,LEADERS,ACCEPTORS) \nSpecify configuration of multi-paxos system.")
 
     p.add_argument("-f", "--fails", required=False, default=False,
         help="Default: False \nSpecify maximum allowed failing nodes (int).\n"+
