@@ -42,14 +42,14 @@ def main():
     try:
         n = sys.argv[1]
     except:
-        print("Please specify number of replicas. Example: Python3 plotthroughput.py 5")
+        print("Please specify number of replicas. Example: Python3 plot_throughput.py 5")
         exit(0)
     data = parse_data(n)
 
     label = []
     avgs = []
     stds = []
-    title = "Throughtput as a function of N clients"
+    title = "Throughput as a function of N clients"
 
     for clients in data.keys():
         label.append(clients)

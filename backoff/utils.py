@@ -61,6 +61,7 @@ class Config(namedtuple('Config',['replicas','acceptors','leaders'])):
 
 
 def parse_config(cfg):
+    """ Parses configuration string. Return dictionary. """
     c = []
     for val in cfg:
         if val.isdigit():
@@ -71,3 +72,7 @@ def parse_config(cfg):
         "leaders": int(c[1]),
         "acceptors": int(c[2])
     }
+
+def create_config(r,l,a):
+    """ Create a config string from input. Return string. """
+    return (str(r)+str(l)+str(a))
