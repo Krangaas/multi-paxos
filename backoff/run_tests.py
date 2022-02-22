@@ -102,7 +102,7 @@ class TestRunner:
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"]+self.i)
 
-        os.system("python3 plot_throughput.py %s" % (str(self.cfg_dict["replicas"])))
+        os.system("python3 plot_acceptors.py %s" % (str(self.cfg_dict["replicas"])))
 
 
     def clean_data_files(self):
