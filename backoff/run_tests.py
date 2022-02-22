@@ -69,7 +69,9 @@ class TestRunner:
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
             self.cli = str(int(self.cli)+self.i)
 
-        os.system("python3 plot_throughput.py %s" % (str(self.cfg_dict["replicas"])))
+        title = "'Throughput as as function of clients\n(timeout %s secs, config %s)'" % (self.tout, self.cfg)
+        print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
+        os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
 
 
     def _thr_inc_replicas_(self):
@@ -79,7 +81,7 @@ class TestRunner:
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"]+self.i, d["leaders"], d["acceptors"])
 
-        os.system("python3 plot_throughput.py %s" % (str(self.cfg_dict["replicas"])))
+        os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
 
 
     def _thr_inc_leaders_(self):
@@ -144,7 +146,7 @@ def parse_args():
     p.add_argument("-n", "--runs", required=False, type=int, default=3,
         help="Default: 1\nNumber of tests to run.")
 
-    p.add_argument("-i", "--increment", required=False, type=int, default=2,
+    p.add_argument("-i", "--increment", required=False, type=int, default=5,
         help="Default: 3 \nVariable server increment per run. Depending on the  test specified, "+
         "this value will increment either the number of clients, replicas, leaders or acceptors.")
 
