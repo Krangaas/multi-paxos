@@ -59,7 +59,6 @@ class Env:
             initialconfig.leaders.append(pid)
         # Send client requests to replicas
         threads = []
-        sent_requests = 0
         for i in range(self.NREQUESTS):
             for c in range(self.NCLIENTS):
                 for r in initialconfig.replicas:
@@ -87,7 +86,6 @@ class Env:
 
         for r in initialconfig.replicas:
             pid = "master"
-            #cmd = Command(pid, self.NCLIENTS, str(self.NREQUESTS*self.NCLIENTS))
             cmd = Command(pid, self.NCLIENTS, str(self.total_requests))
             self.sendMessage(r, DoneMessage(pid,cmd))
             print("Sent",cmd, "from", pid, "to", r)
