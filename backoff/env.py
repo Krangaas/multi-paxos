@@ -20,6 +20,7 @@ class Env:
         self.timeout = float(timeout)
         self.NCLIENTS = int(clients)
         self.NREQUESTS = int(requests/self.NCLIENTS)
+        self.total_requests = requests
 
     def sendMessage(self, dst, msg):
         if dst in self.procs:
@@ -58,6 +59,7 @@ class Env:
             initialconfig.leaders.append(pid)
         # Send client requests to replicas
         threads = []
+        sent_requests = 0
         for i in range(self.NREQUESTS):
             for c in range(self.NCLIENTS):
                 for r in initialconfig.replicas:
@@ -69,9 +71,24 @@ class Env:
                             time.sleep(self.timeout)
                     threads.remove(thread)
 
+        # send equal amount of requests for each run divided amoung n clients.
+        if (self.total_requests % self.NCLIENTS != 0):
+            master = self.NCLIENTS + 1
+            diff = self.total_requests % self.NCLIENTS
+            for i in range(diff):
+                for r in initialconfig.replicas:
+                    t = threading.Thread(target=self.sendClientRequest, args=[i, master, r])
+                    threads.append(t)
+                    for thread in threads:
+                        if not thread.is_alive():
+                            thread.start()
+                            time.sleep(self.timeout)
+                    threads.remove(thread)
+
         for r in initialconfig.replicas:
             pid = "master"
-            cmd = Command(pid, self.NCLIENTS, str(self.NREQUESTS*self.NCLIENTS))
+            #cmd = Command(pid, self.NCLIENTS, str(self.NREQUESTS*self.NCLIENTS))
+            cmd = Command(pid, self.NCLIENTS, str(self.total_requests))
             self.sendMessage(r, DoneMessage(pid,cmd))
             print("Sent",cmd, "from", pid, "to", r)
 
