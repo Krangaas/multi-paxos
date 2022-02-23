@@ -60,12 +60,6 @@ class TestRunner:
         os.system("python3 confirm_consensus.py %s" % (str(self.cfg_dict["replicas"])))
 
 
-    def _thr_per_replica_(self):
-        """ Simple run of the multi-paxos algorithm. Plots the throughput per replica. """
-        os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
-        os.system("python3 plot_throughput.py %s" % (str(self.cfg_dict["replicas"])))
-
-
     def _thr_inc_clients_(self):
         """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of clients. """
         for n in range(self.runs):
@@ -73,8 +67,8 @@ class TestRunner:
             self.cli = str(int(self.cli)+self.i)
 
         title = "'Throughput as as function of clients\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
-        print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
         os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
+
 
     def _thr_inc_req_(self):
         """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of requests. """
@@ -84,17 +78,27 @@ class TestRunner:
             self.req = str(int(self.req)+self.i)
 
         title = "'Throughput as as function of requests\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
-        print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
         os.system("python3 plot_data.py %s %s %s %d %d" % (self.cfg_dict["replicas"], title, "'number of requests'", start, self.i))
 
+
     def _thr_inc_replicas_(self):
-        """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of replicas. """
+        """
+        Multiple runs of the multi-paxos algorithm. Plots throughput as a function of replicas.
+        NOTE: This test does not function properly due to the way measurements per run is stored.
+        """
+        start = parse_config(self.cfg)["replicas"]
         for n in range(self.runs):
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
+            # Update config
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"]+self.i, d["leaders"], d["acceptors"])
 
-        os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
+        # Replace variable role with X in config so that plot title is more representative
+        d = parse_config(self.cfg)
+        d["replicas"] = "X"
+        self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"])
+        title = "'Throughput as as function of replicas\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
+        os.system("python3 plot_data.py %s %s %s %d %d" % (self.cfg_dict["replicas"], title, "'number of replicas'", start, self.i))
 
 
     def _thr_inc_leaders_(self):
@@ -102,10 +106,11 @@ class TestRunner:
         start = parse_config(self.cfg)['leaders']
         for n in range(self.runs):
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
+            # Update config
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"], d["leaders"]+self.i, d["acceptors"])
-            print("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
 
+        # Replace variable role with X in config so that plot title is more representative
         d = parse_config(self.cfg)
         d['leaders'] = "X"
         self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"])
@@ -118,9 +123,11 @@ class TestRunner:
         start = parse_config(self.cfg)["acceptors"]
         for n in range(self.runs):
             os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
+            # Update config
             d = parse_config(self.cfg)
             self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"]+self.i)
 
+        # Replace variable role with X in config so that plot title is more representative
         d = parse_config(self.cfg)
         d["acceptors"] = "X"
         self.cfg = create_config(d["replicas"], d["leaders"], d["acceptors"])
@@ -129,7 +136,7 @@ class TestRunner:
 
 
     def clean_data_files(self):
-        """ Empties the throughput data files. """
+        """ Creates (and empties) the throughput data files. """
         for r in range(self.cfg_dict["replicas"]):
             file = "thr_replica_" + str(r)
             with open(file, "w") as f:
@@ -142,9 +149,8 @@ def parse_args():
         formatter_class=RawTextHelpFormatter)
 
     p.add_argument("-t", "--test", required=False, type=str, default="simple_test",
-        help="\nDefault: 'simple_run' \nSpecify which test to run. Valid inputs are:" +
+        help="\nDefault: 'simple_test' \nSpecify which test to run. Valid inputs are:" +
              "\n     'simple_test': Start a single run and confirm consensus between replicas." +
-             "\n 'thr_per_replica': Start a single run and plot throughput per replica." +
              "\n        'requests': Increment number of requests per run and plot throughput." +
              "\n         'clients': Increment number of clients per run and plot throughput." +
              "\n        'replicas': Increment number of replicas per run and plot throughput" +
@@ -168,14 +174,14 @@ def parse_args():
         help="Default: 1.0 \nTimeout length before a client sends the next request.")
 
     p.add_argument("-n", "--runs", required=False, type=int, default=3,
-        help="Default: 1\nNumber of tests to run.")
+        help="Default: 3\nNumber of tests to run.")
 
     p.add_argument("-i", "--increment", required=False, type=int, default=5,
-        help="Default: 3 \nVariable server increment per run. Depending on the  test specified, "+
+        help="Default: 5 \nVariable server increment per run. Depending on the  test specified, "+
         "this value will increment either the number of clients, replicas, leaders or acceptors.")
 
     p.add_argument("-D", "--debug", required=False, type=bool, default=False,
-        help="Default: False \nPrint output commands and exit.")
+        help="Default: False \n If True, print output commands and exit.")
 
     return p.parse_args()
 

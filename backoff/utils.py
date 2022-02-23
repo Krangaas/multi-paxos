@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from collections import namedtuple
 
 WINDOW = 5               # Number of slots that can have proposals pending

@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from message import P2aMessage,P2bMessage,PreemptedMessage,DecisionMessage
 from process import Process
 from utils import Command
@@ -56,5 +60,3 @@ class Commander(Process):
                 else:
                     self.sendMessage(self.leader, PreemptedMessage(self.id, msg.ballot_number))
                     return
-
-

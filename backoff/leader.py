@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from utils import *
 from process import Process
 from commander import Commander

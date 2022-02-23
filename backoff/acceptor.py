@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from utils import BallotNumber, PValue
 from process import Process
 from message import P1aMessage,P1bMessage,P2aMessage,P2bMessage

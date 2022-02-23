@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 class Message:
     """
     Base class for all messages used in Paxos.

@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from process import Process
 from message import P1aMessage, P1bMessage, PreemptedMessage, AdoptedMessage
 
@@ -59,4 +63,3 @@ class Scout(Process):
                     return
             else:
                 print("Scout: unexpected msg")
-

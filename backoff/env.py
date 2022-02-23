@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 import os, signal, sys, time, threading
 from acceptor import Acceptor
 from leader import Leader

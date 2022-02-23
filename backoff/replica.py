@@ -1,3 +1,7 @@
+#_______________________________________________
+#|                                             |
+#| From: https://github.com/denizalti/paxosmmc |
+#|_____________________________________________|
 from process import Process
 from message import ProposeMessage,DecisionMessage,RequestMessage,DoneMessage
 from utils import *
