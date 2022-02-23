@@ -48,6 +48,8 @@ class TestRunner:
             self._thr_inc_leaders_()
         elif test == "acceptors":
             self._thr_inc_acceptors_()
+        elif test == "requests":
+            test = self._thr_inc_req_()
         else:
             print("No such test:", test)
 
@@ -74,6 +76,16 @@ class TestRunner:
         print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
         os.system("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
 
+    def _thr_inc_req_(self):
+        """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of requests. """
+        start = int(self.req)
+        for n in range(self.runs):
+            os.system("python3 env.py -r%s -C%s -T%s -c%s" % (self.req, self.cfg, self.tout ,self.cli))
+            self.req = str(int(self.req)+self.i)
+
+        title = "'Throughput as as function of requests\ntimeout %s secs, config (%s)'" % (self.tout, self.cfg)
+        print("python3 plot_throughput.py %s %s" % (str(self.cfg_dict["replicas"]), title))
+        os.system("python3 plot_data.py %s %s %s %d %d" % (self.cfg_dict["replicas"], title, "'number of requests'", start, self.i))
 
     def _thr_inc_replicas_(self):
         """ Multiple runs of the multi-paxos algorithm. Plots throughput as a function of replicas. """
@@ -133,6 +145,7 @@ def parse_args():
         help="\nDefault: 'simple_run' \nSpecify which test to run. Valid inputs are:" +
              "\n     'simple_test': Start a single run and confirm consensus between replicas." +
              "\n 'thr_per_replica': Start a single run and plot throughput per replica." +
+             "\n        'requests': Increment number of requests per run and plot throughput." +
              "\n         'clients': Increment number of clients per run and plot throughput." +
              "\n        'replicas': Increment number of replicas per run and plot throughput" +
              "\n         'leaders': Increment number of leaders per run and plot throughput" +

@@ -96,7 +96,7 @@ class Env:
             for key in keylist:
                 if self.procs[key].written:
                     done += 1
-            time.sleep(10)
+            time.sleep(2)
 
         self._graceexit()
 
